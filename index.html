@@ -148,7 +148,6 @@
             flex-wrap: wrap;
             justify-content: center;
             max-width: 600px;
-            perspective: 1000px;
         }
 
         .dice {
@@ -166,17 +165,6 @@
                 inset -4px -4px 12px rgba(0, 0, 0, 0.2),
                 inset 4px 4px 12px rgba(255, 255, 255, 0.4);
             transition: background-color 0.15s, transform 0.1s;
-        }
-
-        .dice.rolling {
-            animation: rollAnimation 0.6s ease-out;
-        }
-
-        @keyframes rollAnimation {
-            0% { transform: scale(1) rotate(0deg); }
-            30% { transform: scale(1.15) rotate(180deg); }
-            70% { transform: scale(0.9) rotate(270deg); }
-            100% { transform: scale(1) rotate(360deg); }
         }
 
         .dot {
@@ -212,6 +200,50 @@
             box-shadow: none;
         }
 
+        /* WEISSES OVERLAY MIT DREHENDEM WÜRFEL IN DER MITTE */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.85); /* Leicht transparentes Weiß */
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .overlay.active {
+            display: flex;
+        }
+
+        /* Großer Animation-Würfel in der Mitte */
+        .overlay-dice {
+            width: 120px;
+            height: 120px;
+            background: #ffeb3b;
+            border: 4px solid #000;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            animation: spinAndScale 0.8s infinite ease-in-out;
+        }
+
+        .overlay-dice .dot {
+            width: 28px;
+            height: 28px;
+        }
+
+        @keyframes spinAndScale {
+            0% { transform: rotate(0deg) scale(0.8); }
+            50% { transform: rotate(180deg) scale(1.3); }
+            100% { transform: rotate(360deg) scale(0.8); }
+        }
+
         /* Kleines Pop-Up Menü unten rechts für Farb-Einstellungen */
         .color-popup {
             position: fixed;
@@ -222,7 +254,7 @@
             border-radius: 12px;
             padding: 15px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-            display: none; /* Standardmäßig unsichtbar */
+            display: none;
             flex-direction: column;
             gap: 10px;
             z-index: 1000;
@@ -231,7 +263,7 @@
         }
 
         .color-popup.open {
-            display: flex; /* Wird sichtbar bei 'P' */
+            display: flex;
         }
 
         .color-popup h3 {
@@ -273,6 +305,12 @@
     </style>
 </head>
 <body>
+
+    <div id="roll-overlay" class="overlay">
+        <div class="overlay-dice">
+            <span class="dot"></span>
+        </div>
+    </div>
 
     <header>
         <h1>Online Dice</h1>
@@ -369,7 +407,7 @@
                 
                 container.appendChild(dice);
             }
-            applyDiceLogic(false);
+            applyDiceLogic();
         }
 
         function toggleColor(colorName) {
@@ -390,36 +428,51 @@
             }
         }
 
-        function startRoll() {
-            const container = document.getElementById('dice-container');
-            const dices = container.getElementsByClassName('dice');
-            const rollBtn = document.getElementById('roll-button');
-            
-            rollBtn.disabled = true;
-
-            const currentPool = [];
-            for (const color in allowedColors) {
-                if (allowedColors[color]) currentPool.push(color);
-            }
-
-            let intervalCounter = 0;
-            const interval = setInterval(() => {
-                for (let i = 0; i < dices.length; i++) {
-                    dices[i].className = 'dice rolling';
-                    const randomColor = currentPool[Math.floor(Math.random() * currentPool.length)];
-                    dices[i].classList.add(`color-${randomColor}`);
+        // Erzeugt einen echten Würfel-Klacker-Sound direkt per Web Audio API
+        function playDiceSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                for (let i = 0; i < 4; i++) {
+                    setTimeout(() => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(120 + Math.random() * 80, audioCtx.currentTime);
+                        
+                        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                        
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.08);
+                    }, i * 100);
                 }
-                intervalCounter++;
-                if (intervalCounter > 5) clearInterval(interval);
-            }, 80);
-
-            setTimeout(() => {
-                applyDiceLogic(true);
-                rollBtn.disabled = false;
-            }, 600);
+            } catch (e) {
+                console.log("Audio Kontext konnte nicht gestartet werden.");
+            }
         }
 
-        function applyDiceLogic(isRollingAnimationEnd) {
+        // Startet das Würfeln mit weißem Overlay & Sound
+        function startRoll() {
+            const rollBtn = document.getElementById('roll-button');
+            const overlay = document.getElementById('roll-overlay');
+            
+            rollBtn.disabled = true;
+            overlay.classList.add('active'); // Weißes Overlay anzeigen
+            playDiceSound(); // Würfel-Sound abspielen
+
+            // Nach 800ms verschwindet das Overlay und die erzeugten Farben werden gesetzt
+            setTimeout(() => {
+                applyDiceLogic();
+                overlay.classList.remove('active');
+                rollBtn.disabled = false;
+            }, 800);
+        }
+
+        function applyDiceLogic() {
             const container = document.getElementById('dice-container');
             const dices = container.getElementsByClassName('dice');
             const totalDice = dices.length;
@@ -467,6 +520,7 @@
                 }
             }
 
+            // Mischen der Reihenfolge
             for (let i = finalColors.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [finalColors[i], finalColors[j]] = [finalColors[j], finalColors[i]];
