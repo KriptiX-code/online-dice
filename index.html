@@ -258,7 +258,7 @@
             flex-direction: column;
             gap: 10px;
             z-index: 1000;
-            width: 180px;
+            width: 200px;
             text-align: center;
         }
 
@@ -280,14 +280,14 @@
         }
 
         .toggle-btn {
-            padding: 6px 10px;
+            padding: 6px 8px;
             border: 1.5px solid white;
             background: transparent;
             color: white;
             border-radius: 12px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             transition: all 0.2s;
         }
 
@@ -357,14 +357,14 @@
     </div>
 
     <div id="color-popup-menu" class="color-popup">
-        <h3>Farben (Taste P)</h3>
+        <h3>Farben (Menü: P)</h3>
         <div class="color-toggle-grid">
-            <button id="btn-red" class="toggle-btn active" onclick="toggleColor('red')">Rot</button>
-            <button id="btn-green" class="toggle-btn active" onclick="toggleColor('green')">Grün</button>
-            <button id="btn-blue" class="toggle-btn active" onclick="toggleColor('blue')">Blau</button>
-            <button id="btn-yellow" class="toggle-btn active" onclick="toggleColor('yellow')">Gelb</button>
-            <button id="btn-purple" class="toggle-btn active" onclick="toggleColor('purple')">Purple</button>
-            <button id="btn-orange" class="toggle-btn active" onclick="toggleColor('orange')">Orange</button>
+            <button id="btn-red" class="toggle-btn active" onclick="toggleColor('red')">Rot [R]</button>
+            <button id="btn-green" class="toggle-btn active" onclick="toggleColor('green')">Grün [G]</button>
+            <button id="btn-blue" class="toggle-btn active" onclick="toggleColor('blue')">Blau [B]</button>
+            <button id="btn-yellow" class="toggle-btn active" onclick="toggleColor('yellow')">Gelb [Y]</button>
+            <button id="btn-purple" class="toggle-btn active" onclick="toggleColor('purple')">Purple [U]</button>
+            <button id="btn-orange" class="toggle-btn active" onclick="toggleColor('orange')">Orange [O]</button>
         </div>
     </div>
 
@@ -373,11 +373,25 @@
             red: true, green: true, blue: true, yellow: true, purple: true, orange: true
         };
 
-        // Tastatur-Event: 'P' öffnet/schließt das Farb-Menü unten rechts
+        // Tastatur-Shortcuts für Farben & Menü
         document.addEventListener('keydown', function(event) {
-            if (event.key === 'p' || event.key === 'P') {
+            const key = event.key.toLowerCase();
+
+            if (key === 'p') {
                 const popup = document.getElementById('color-popup-menu');
                 popup.classList.toggle('open');
+            } else if (key === 'r') {
+                toggleColor('red');
+            } else if (key === 'g') {
+                toggleColor('green');
+            } else if (key === 'b') {
+                toggleColor('blue');
+            } else if (key === 'y' || key === 'j') {
+                toggleColor('yellow');
+            } else if (key === 'u') {
+                toggleColor('purple');
+            } else if (key === 'o') {
+                toggleColor('orange');
             }
         });
 
@@ -428,7 +442,7 @@
             }
         }
 
-        // Erzeugt einen echten Würfel-Klacker-Sound direkt per Web Audio API
+        // Erzeugt einen Würfel-Klacker-Sound direkt per Web Audio API
         function playDiceSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -455,16 +469,14 @@
             }
         }
 
-        // Startet das Würfeln mit weißem Overlay & Sound
         function startRoll() {
             const rollBtn = document.getElementById('roll-button');
             const overlay = document.getElementById('roll-overlay');
             
             rollBtn.disabled = true;
-            overlay.classList.add('active'); // Weißes Overlay anzeigen
-            playDiceSound(); // Würfel-Sound abspielen
+            overlay.classList.add('active');
+            playDiceSound();
 
-            // Nach 800ms verschwindet das Overlay und die erzeugten Farben werden gesetzt
             setTimeout(() => {
                 applyDiceLogic();
                 overlay.classList.remove('active');
@@ -520,7 +532,6 @@
                 }
             }
 
-            // Mischen der Reihenfolge
             for (let i = finalColors.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [finalColors[i], finalColors[j]] = [finalColors[j], finalColors[i]];
