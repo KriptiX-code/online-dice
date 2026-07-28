@@ -54,16 +54,9 @@
             margin-top: 0;
         }
 
-        .login-box input {
-            width: 80%;
-            padding: 10px;
-            margin: 15px 0;
-            border-radius: 8px;
-            border: 1px solid #ffeb3b;
-            background: #222;
-            color: white;
-            font-size: 1rem;
-            text-align: center;
+        .login-box p {
+            margin-bottom: 25px;
+            color: #ccc;
         }
 
         .login-box button {
@@ -71,10 +64,15 @@
             background-color: #ffeb3b;
             color: #000;
             border: none;
-            padding: 10px 25px;
+            padding: 12px 25px;
             font-size: 1.2rem;
             border-radius: 20px;
             cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .login-box button:hover {
+            transform: scale(1.05);
         }
 
         header {
@@ -347,10 +345,8 @@
     <div id="login-overlay" class="login-overlay">
         <div class="login-box">
             <h2>TikTok Login</h2>
-            <p>Gib deinen TikTok-Usernamen ein:</p>
-            <input type="text" id="tiktok-username" placeholder="@dein_username">
-            <br>
-            <button onclick="loginWithTikTok()">Anmelden</button>
+            <p>Melde dich mit deinem echten TikTok-Account an, um mitzuwürfeln!</p>
+            <button onclick="redirectToTikTokLogin()">Mit TikTok anmelden</button>
         </div>
     </div>
 
@@ -416,42 +412,94 @@
     </div>
 
     <script>
-        // Liste der berechtigten Top Streamer
-        const topStreamers = ["kriptix01", "nexo_142012"];
+        // Systemvariablen
+        let isLoggedIn = false;
+        let loggedUser = null;
         let isTopStreamer = false;
 
+        const topStreamers = ["kriptix01", "nexo_142012"];
         const allowedColors = {
             red: true, green: true, blue: true, yellow: true, purple: true, orange: true
         };
 
-        // TikTok Login Funktion
-        function loginWithTikTok() {
-            let input = document.getElementById('tiktok-username').value.trim().toLowerCase();
-            if (input.startsWith('@')) {
-                input = input.substring(1);
-            }
+        // TikTok Login via OAuth Redirect
+        function redirectToTikTokLogin() {
+            // Trage hier deinen echten TikTok App Client Key ein:
+            const CLIENT_KEY = 'DEIN_TIKTOK_CLIENT_KEY'; 
+            const REDIRECT_URI = encodeURIComponent(window.location.origin + window.location.pathname);
+            const scope = 'user.info.basic';
+            
+            // Generiert eine eindeutige CSRF-Sicherheits-ID
+            const state = Math.random().toString(36).substring(7);
+            localStorage.setItem('oauth_state', state);
 
-            if (!input) {
-                alert("Bitte gib einen TikTok-Usernamen ein!");
-                return;
-            }
+            // TikTok Auth URL
+            const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${CLIENT_KEY}&response_type=code&scope=${scope}&redirect_uri=${REDIRECT_URI}&state=${state}`;
 
-            // Prüfe, ob der User in der Liste ist
-            if (topStreamers.includes(input)) {
+            // Weiterleitung zu TikTok
+            window.location.href = authUrl;
+        }
+
+        // Beim Laden der Seite: Authentifizierung & URL-Parameter prüfen
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+
+            if (code) {
+                // Erfolgreiche Rückkehr von TikTok
+                // Für Testzwecke wird der Login hier simuliert. In Produktion wird der Code an den Server gesendet.
+                const username = "kriptix01"; // Beispiel-Streamer (kann dynamisch verarbeitet werden)
+                
+                completeLogin(username);
+
+                // URL bereinigen
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else {
+                // Zeige Overlay, wenn nicht eingeloggt
+                document.getElementById('login-overlay').style.display = 'flex';
+            }
+        });
+
+        function completeLogin(username) {
+            isLoggedIn = true;
+            loggedUser = username.toLowerCase();
+
+            if (topStreamers.includes(loggedUser)) {
                 isTopStreamer = true;
-                alert("Erfolgreich als Top-Streamer angemeldet! Du hast Zugriff auf das Farb-Panel.");
+                alert(`Erfolgreich als Top-Streamer (@${loggedUser}) angemeldet! Du hast Zugriff auf das Farb-Panel.`);
             } else {
                 isTopStreamer = false;
-                alert("Angemeldet als " + input + ". Du hast KEINEN Zugriff auf das Farb-Panel.");
+                alert(`Angemeldet als @${loggedUser}. Viel Spaß beim Würfeln!`);
             }
 
-            // Login-Overlay ausblenden
             document.getElementById('login-overlay').style.display = 'none';
         }
 
-        // Tastatur-Shortcuts (NUR wenn isTopStreamer = true)
+        // Würfeln (nur für angemeldete Nutzer möglich)
+        function startRoll() {
+            if (!isLoggedIn) {
+                alert("Bitte melde dich zuerst mit TikTok an, um würfeln zu können!");
+                document.getElementById('login-overlay').style.display = 'flex';
+                return;
+            }
+
+            const rollBtn = document.getElementById('roll-button');
+            const overlay = document.getElementById('roll-overlay');
+            
+            rollBtn.disabled = true;
+            overlay.classList.add('active');
+            playDiceSound();
+
+            setTimeout(() => {
+                applyDiceLogic();
+                overlay.classList.remove('active');
+                rollBtn.disabled = false;
+            }, 800);
+        }
+
+        // Tastatur-Shortcuts (NUR wenn Top-Streamer)
         document.addEventListener('keydown', function(event) {
-            if (!isTopStreamer) return; // Gesperrt für normale User
+            if (!isTopStreamer) return;
 
             const key = event.key.toLowerCase();
 
@@ -476,7 +524,6 @@
         function toggleColor(colorName) {
             if (!isTopStreamer) return;
 
-            // REGEL: Es muss immer mindestens eine Farbe aktiv bleiben!
             const activeCount = Object.values(allowedColors).filter(v => v === true).length;
             if (allowedColors[colorName] && activeCount <= 1) {
                 alert("Es muss mindestens eine Farbe aktiv bleiben!");
@@ -549,21 +596,6 @@
             }
         }
 
-        function startRoll() {
-            const rollBtn = document.getElementById('roll-button');
-            const overlay = document.getElementById('roll-overlay');
-            
-            rollBtn.disabled = true;
-            overlay.classList.add('active');
-            playDiceSound();
-
-            setTimeout(() => {
-                applyDiceLogic();
-                overlay.classList.remove('active');
-                rollBtn.disabled = false;
-            }, 800);
-        }
-
         function applyDiceLogic() {
             const container = document.getElementById('dice-container');
             const dices = container.getElementsByClassName('dice');
@@ -627,4 +659,3 @@
     </script>
 </body>
 </html>
-
