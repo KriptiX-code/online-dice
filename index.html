@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
     <style>
         body {
-            background-color: #6a1b9a;
+            background-color: #6a1b9a; /* Einfarbiger lilaner Hintergrund */
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -21,60 +21,6 @@
             min-height: 100vh;
             overflow-x: hidden;
             overflow-y: auto;
-        }
-
-        /* TIKTOK LOGIN OVERLAY */
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.95);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-        }
-
-        .login-box {
-            background: #121212;
-            border: 2px solid #ffeb3b;
-            padding: 30px;
-            border-radius: 16px;
-            text-align: center;
-            max-width: 350px;
-            width: 90%;
-            box-shadow: 0 0 20px rgba(255, 235, 59, 0.3);
-        }
-
-        .login-box h2 {
-            font-family: 'Permanent Marker', cursive;
-            color: #ffeb3b;
-            margin-top: 0;
-        }
-
-        .login-box input {
-            width: 80%;
-            padding: 10px;
-            margin: 15px 0;
-            border-radius: 8px;
-            border: 1px solid #ffeb3b;
-            background: #222;
-            color: white;
-            font-size: 1rem;
-            text-align: center;
-        }
-
-        .login-box button {
-            font-family: 'Permanent Marker', cursive;
-            background-color: #ffeb3b;
-            color: #000;
-            border: none;
-            padding: 10px 25px;
-            font-size: 1.2rem;
-            border-radius: 20px;
-            cursor: pointer;
         }
 
         header {
@@ -191,6 +137,9 @@
             cursor: pointer;
             transition: background 0.2s;
         }
+        .bg-upload-btn:hover {
+            background-color: #e0e0e0;
+        }
 
         .dice-container {
             display: flex;
@@ -240,14 +189,25 @@
             letter-spacing: 1px;
         }
 
-        /* WEISSES OVERLAY MIT DREHENDEM WÜRFEL */
+        button.roll-btn:hover {
+            background-color: #fdd835;
+        }
+
+        button.roll-btn:disabled {
+            background-color: #b0bec5;
+            color: #37474f;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* WEISSES OVERLAY MIT DREHENDEM WÜRFEL IN DER MITTE */
         .overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.85); /* Leicht transparentes Weiß */
             backdrop-filter: blur(5px);
             display: none;
             align-items: center;
@@ -259,6 +219,7 @@
             display: flex;
         }
 
+        /* Großer Animation-Würfel in der Mitte */
         .overlay-dice {
             width: 120px;
             height: 120px;
@@ -283,7 +244,7 @@
             100% { transform: rotate(360deg) scale(0.8); }
         }
 
-        /* COLOR POPUP PANEL */
+        /* Kleines Pop-Up Menü unten rechts für Farb-Einstellungen */
         .color-popup {
             position: fixed;
             bottom: 20px;
@@ -309,6 +270,7 @@
             margin: 0;
             font-size: 0.95rem;
             color: #ffeb3b;
+            font-family: 'Segoe UI', sans-serif;
         }
 
         .color-toggle-grid {
@@ -344,16 +306,6 @@
 </head>
 <body>
 
-    <div id="login-overlay" class="login-overlay">
-        <div class="login-box">
-            <h2>TikTok Login</h2>
-            <p>Gib deinen TikTok-Usernamen ein:</p>
-            <input type="text" id="tiktok-username" placeholder="@dein_username">
-            <br>
-            <button onclick="loginWithTikTok()">Anmelden</button>
-        </div>
-    </div>
-
     <div id="roll-overlay" class="overlay">
         <div class="overlay-dice">
             <span class="dot"></span>
@@ -368,7 +320,7 @@
         <div class="sidebar">
             <h2>Top Streamer</h2>
             <ul class="streamer-list">
-                <li><a href="https://tiktok.com/@kriptix01" target="_blank">kriptix01</a></li>
+                <li><a href="https://tiktok.com/@kriptix01" target="_blank">Kriptix</a></li>
             </ul>
         </div>
 
@@ -390,7 +342,8 @@
                 <button class="bg-upload-btn" onclick="document.getElementById('bg-input').click()">Hintergrundbild ändern</button>
             </div>
 
-            <div id="dice-container" class="dice-container"></div>
+            <div id="dice-container" class="dice-container">
+                </div>
             
             <button id="roll-button" class="roll-btn" onclick="startRoll()">Würfeln</button>
         </div>
@@ -416,43 +369,12 @@
     </div>
 
     <script>
-        // Liste der berechtigten Top Streamer
-        const topStreamers = ["kriptix01", "nexo_142012"];
-        let isTopStreamer = false;
-
         const allowedColors = {
             red: true, green: true, blue: true, yellow: true, purple: true, orange: true
         };
 
-        // TikTok Login Funktion
-        function loginWithTikTok() {
-            let input = document.getElementById('tiktok-username').value.trim().toLowerCase();
-            if (input.startsWith('@')) {
-                input = input.substring(1);
-            }
-
-            if (!input) {
-                alert("Bitte gib einen TikTok-Usernamen ein!");
-                return;
-            }
-
-            // Prüfe, ob der User in der Liste ist
-            if (topStreamers.includes(input)) {
-                isTopStreamer = true;
-                alert("Erfolgreich als Top-Streamer angemeldet! Du hast Zugriff auf das Farb-Panel.");
-            } else {
-                isTopStreamer = false;
-                alert("Angemeldet als " + input + ". Du hast KEINEN Zugriff auf das Farb-Panel.");
-            }
-
-            // Login-Overlay ausblenden
-            document.getElementById('login-overlay').style.display = 'none';
-        }
-
-        // Tastatur-Shortcuts (NUR wenn isTopStreamer = true)
+        // Tastatur-Shortcuts für Farben & Menü
         document.addEventListener('keydown', function(event) {
-            if (!isTopStreamer) return; // Gesperrt für normale User
-
             const key = event.key.toLowerCase();
 
             if (key === 'p') {
@@ -461,9 +383,9 @@
             } else if (key === 'r') {
                 toggleColor('red');
             } else if (key === 'g') {
-                toggleColor('yellow');
+                toggleColor('yellow'); // G = Gelb
             } else if (key === 'l') {
-                toggleColor('purple');
+                toggleColor('purple'); // L = Purple
             } else if (key === 'b') {
                 toggleColor('blue');
             } else if (key === 'n') {
@@ -472,27 +394,6 @@
                 toggleColor('orange');
             }
         });
-
-        function toggleColor(colorName) {
-            if (!isTopStreamer) return;
-
-            // REGEL: Es muss immer mindestens eine Farbe aktiv bleiben!
-            const activeCount = Object.values(allowedColors).filter(v => v === true).length;
-            if (allowedColors[colorName] && activeCount <= 1) {
-                alert("Es muss mindestens eine Farbe aktiv bleiben!");
-                return;
-            }
-
-            allowedColors[colorName] = !allowedColors[colorName];
-            const btn = document.getElementById(`btn-${colorName}`);
-            if (allowedColors[colorName]) {
-                btn.classList.add('active');
-                btn.style.opacity = "1";
-            } else {
-                btn.classList.remove('active');
-                btn.style.opacity = "0.4";
-            }
-        }
 
         function changeBackground(input) {
             if (input.files && input.files[0]) {
@@ -523,6 +424,25 @@
             applyDiceLogic();
         }
 
+        function toggleColor(colorName) {
+            const activeCount = Object.values(allowedColors).filter(v => v === true).length;
+            if (allowedColors[colorName] && activeCount <= 1) {
+                alert("Es muss mindestens eine Farbe aktiv bleiben!");
+                return;
+            }
+
+            allowedColors[colorName] = !allowedColors[colorName];
+            const btn = document.getElementById(`btn-${colorName}`);
+            if (allowedColors[colorName]) {
+                btn.classList.add('active');
+                btn.style.opacity = "1";
+            } else {
+                btn.classList.remove('active');
+                btn.style.opacity = "0.4";
+            }
+        }
+
+        // Erzeugt einen Würfel-Klacker-Sound direkt per Web Audio API
         function playDiceSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -545,7 +465,7 @@
                     }, i * 100);
                 }
             } catch (e) {
-                console.log("Audio nicht verfügbar.");
+                console.log("Audio Kontext konnte nicht gestartet werden.");
             }
         }
 
