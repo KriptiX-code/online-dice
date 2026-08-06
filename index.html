@@ -23,6 +23,60 @@
             overflow-y: auto;
         }
 
+        /* TIKTOK LOGIN OVERLAY */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .login-box {
+            background: #121212;
+            border: 2px solid #ffeb3b;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 350px;
+            width: 90%;
+            box-shadow: 0 0 20px rgba(255, 235, 59, 0.3);
+        }
+
+        .login-box h2 {
+            font-family: 'Permanent Marker', cursive;
+            color: #ffeb3b;
+            margin-top: 0;
+        }
+
+        .login-box input {
+            width: 80%;
+            padding: 10px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border: 1px solid #ffeb3b;
+            background: #222;
+            color: white;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .login-box button {
+            font-family: 'Permanent Marker', cursive;
+            background-color: #ffeb3b;
+            color: #000;
+            border: none;
+            padding: 10px 25px;
+            font-size: 1.2rem;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
         header {
             text-align: center;
             padding: 25px 20px 10px 20px;
@@ -42,7 +96,6 @@
                 -1px 1px 0px #000,
                 1px 1px 0px #000,
                 5px 5px 10px rgba(0,0,0,0.6);
-            transition: filter 0.3s ease;
         }
 
         .main-container {
@@ -162,7 +215,7 @@
                 9px 9px 15px rgba(0, 0, 0, 0.4),
                 inset -4px -4px 12px rgba(0, 0, 0, 0.2),
                 inset 4px 4px 12px rgba(255, 255, 255, 0.4);
-            transition: background-color 0.15s, transform 0.1s, filter 0.3s ease;
+            transition: background-color 0.15s, transform 0.1s;
         }
 
         .dot {
@@ -187,6 +240,7 @@
             letter-spacing: 1px;
         }
 
+        /* WEISSES OVERLAY MIT DREHENDEM WÜRFEL */
         .overlay {
             position: fixed;
             top: 0;
@@ -229,6 +283,7 @@
             100% { transform: rotate(360deg) scale(0.8); }
         }
 
+        /* COLOR POPUP PANEL */
         .color-popup {
             position: fixed;
             bottom: 20px;
@@ -279,33 +334,6 @@
             color: black;
         }
 
-        .hide-name-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #ffeb3b;
-            color: #ffeb3b;
-            padding: 10px 18px;
-            border-radius: 12px;
-            font-family: 'Permanent Marker', cursive;
-            font-size: 1rem;
-            cursor: pointer;
-            z-index: 1000;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-            transition: all 0.2s;
-        }
-
-        .hide-name-btn:hover {
-            background: #ffeb3b;
-            color: #000;
-        }
-
-        .blurred {
-            filter: blur(12px) !important;
-            user-select: none;
-        }
-
         .color-red { background: radial-gradient(circle at 35% 35%, #ff5252, #ff1744) !important; }
         .color-green { background: radial-gradient(circle at 35% 35%, #69f0ae, #00e676) !important; }
         .color-blue { background: radial-gradient(circle at 35% 35%, #448aff, #2979ff) !important; }
@@ -316,6 +344,16 @@
 </head>
 <body>
 
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-box">
+            <h2>TikTok Login</h2>
+            <p>Gib deinen TikTok-Usernamen ein:</p>
+            <input type="text" id="tiktok-username" placeholder="@dein_username">
+            <br>
+            <button onclick="loginWithTikTok()">Anmelden</button>
+        </div>
+    </div>
+
     <div id="roll-overlay" class="overlay">
         <div class="overlay-dice">
             <span class="dot"></span>
@@ -323,7 +361,7 @@
     </div>
 
     <header>
-        <h1 id="site-title">Online Dice</h1>
+        <h1>Online Dice</h1>
     </header>
 
     <div class="main-container">
@@ -365,8 +403,6 @@
         </div>
     </div>
 
-    <button class="hide-name-btn" onclick="toggleHideName()">Hide Name</button>
-
     <div id="color-popup-menu" class="color-popup">
         <h3>Farben (Menü: P)</h3>
         <div class="color-toggle-grid">
@@ -380,27 +416,43 @@
     </div>
 
     <script>
-        let isNameHidden = false;
+        // Liste der berechtigten Top Streamer
+        const topStreamers = ["kriptix01", "nexo_142012"];
+        let isTopStreamer = false;
 
         const allowedColors = {
             red: true, green: true, blue: true, yellow: true, purple: true, orange: true
         };
 
-        function toggleHideName() {
-            isNameHidden = !isNameHidden;
-            const title = document.getElementById('site-title');
-            const container = document.getElementById('dice-container');
-
-            if (isNameHidden) {
-                title.classList.add('blurred');
-                container.classList.add('blurred');
-            } else {
-                title.classList.remove('blurred');
-                container.classList.remove('blurred');
+        // TikTok Login Funktion
+        function loginWithTikTok() {
+            let input = document.getElementById('tiktok-username').value.trim().toLowerCase();
+            if (input.startsWith('@')) {
+                input = input.substring(1);
             }
+
+            if (!input) {
+                alert("Bitte gib einen TikTok-Usernamen ein!");
+                return;
+            }
+
+            // Prüfe, ob der User in der Liste ist
+            if (topStreamers.includes(input)) {
+                isTopStreamer = true;
+                alert("Erfolgreich als Top-Streamer angemeldet! Du hast Zugriff auf das Farb-Panel.");
+            } else {
+                isTopStreamer = false;
+                alert("Angemeldet als " + input + ". Du hast KEINEN Zugriff auf das Farb-Panel.");
+            }
+
+            // Login-Overlay ausblenden
+            document.getElementById('login-overlay').style.display = 'none';
         }
 
+        // Tastatur-Shortcuts (NUR wenn isTopStreamer = true)
         document.addEventListener('keydown', function(event) {
+            if (!isTopStreamer) return; // Gesperrt für normale User
+
             const key = event.key.toLowerCase();
 
             if (key === 'p') {
@@ -422,6 +474,9 @@
         });
 
         function toggleColor(colorName) {
+            if (!isTopStreamer) return;
+
+            // REGEL: Es muss immer mindestens eine Farbe aktiv bleiben!
             const activeCount = Object.values(allowedColors).filter(v => v === true).length;
             if (allowedColors[colorName] && activeCount <= 1) {
                 alert("Es muss mindestens eine Farbe aktiv bleiben!");
