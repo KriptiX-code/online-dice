@@ -187,7 +187,7 @@
             letter-spacing: 1px;
         }
 
-        /* WEISSES OVERLAY MIT DREHENDEM WÜRFEL */
+        /* WEISSES OVERLAY MIT DREHENDEM WÜRFEL BEIM WÜRFELN */
         .overlay {
             position: fixed;
             top: 0;
@@ -389,7 +389,7 @@
             red: true, green: true, blue: true, yellow: true, purple: true, orange: true
         };
 
-        // Name & Farben verschwommen schalten
+        // Name & Würfelfarben verschwommen schalten
         function toggleHideName() {
             isNameHidden = !isNameHidden;
             const title = document.getElementById('site-title');
@@ -404,7 +404,7 @@
             }
         }
 
-        // Tastatur-Shortcuts
+        // Tastatur-Shortcuts für das Farbmenü
         document.addEventListener('keydown', function(event) {
             const key = event.key.toLowerCase();
 
@@ -427,7 +427,6 @@
         });
 
         function toggleColor(colorName) {
-            // REGEL: Es muss immer mindestens eine Farbe aktiv bleiben!
             const activeCount = Object.values(allowedColors).filter(v => v === true).length;
             if (allowedColors[colorName] && activeCount <= 1) {
                 alert("Es muss mindestens eine Farbe aktiv bleiben!");
